@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template, redirect, url_for
 from datetime import datetime
 import json
 import os
@@ -53,7 +53,7 @@ posts = load_posts()
 
 @app.route('/')
 def home():
-    return "<h1>Hello, Typo Blog!</h1>"
+    return render_template('index.html', posts=posts)
 
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
@@ -128,6 +128,50 @@ def delete_post(post_id):
     
     # Return success message
     return jsonify({'message': 'Post deleted successfully'}), 200
+
+# Frontend routes
+@app.route('/posts/new', methods=['GET'])
+def create_post_page():
+    return render_template('create.html')
+
+@app.route('/posts/create', methods=['POST'])
+def create_post_submit():
+    title = request.form.get('title')
+    content = request.form.get('content')
+    
+    if not title or not content:
+        return "Title and content are required!", 400
+    
+    new_post = BlogPost(title, content)
+    posts.append(new_post)
+    save_posts(posts)
+    
+    return redirect(url_for('home'))
+
+@app.route('/posts/<post_id>/edit', methods=['GET'])
+def edit_post_page(post_id):
+    post = next((post for post in posts if post.id == post_id), None)
+    if post is None:
+        return "Post not found!", 404
+    return render_template('edit.html', post=post)
+
+@app.route('/posts/<post_id>/update', methods=['POST'])
+def update_post_submit(post_id):
+    post = next((post for post in posts if post.id == post_id), None)
+    if post is None:
+        return "Post not found!", 404
+    
+    title = request.form.get('title')
+    content = request.form.get('content')
+    
+    if not title or not content:
+        return "Title and content are required!", 400
+    
+    post.title = title
+    post.content = content
+    save_posts(posts)
+    
+    return redirect(url_for('home'))
 
 if __name__ == '__main__':
     print("Starting Flask app on http://localhost:8000 ...")
