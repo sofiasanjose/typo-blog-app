@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}✧ Typo{% endblock %}
+
+{% block content %}
+<div class="landing-page">
+    <div class="landing-content">
+        <h1 class="landing-title">⋆.˚ Typo ⋆.˚</h1>
+        <p class="landing-subtitle">✧ Your aesthetic blog space ✧</p>
+        <div class="landing-actions">
+            <a href="{{ url_for('feed') }}" class="btn btn-primary landing-btn">✧ Enter Blog ✧</a>
+            <a href="{{ url_for('customize') }}" class="btn btn-secondary landing-btn">♡ Customize ♡</a>
+        </div>
+    </div>
+    <div class="decorative-elements">
+        <span class="deco">𓇼</span>
+        <span class="deco">🌊</span>
+        <span class="deco">⋆</span>
+        <span class="deco">𓆉</span>
+        <span class="deco">♡</span>
+        <span class="deco">𓆝</span>
+    </div>
+</div>
+{% endblock %}

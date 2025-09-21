@@ -6,17 +6,44 @@
     <title>{% block title %}✧ Typo Blog{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% if customization and customization.bg_style %}
+        {% if customization.bg_style == 'gradient1' %}
+            <style>
+                body { background: linear-gradient(to bottom right, #f0f6ff, #fff5f9); }
+            </style>
+        {% elif customization.bg_style == 'gradient2' %}
+            <style>
+                body { background: linear-gradient(45deg, #ffe5e5, #e5f0ff, #e5ffe5); }
+            </style>
+        {% elif customization.bg_style == 'gradient3' %}
+            <style>
+                body { background: linear-gradient(to right, #e3f4f4, #d7f5f5, #c6f1f1); }
+            </style>
+        {% else %}
+            <style>
+                body { background: #ffffff; }
+            </style>
+        {% endif %}
+    {% endif %}
 </head>
 <body>
+    {% if request.endpoint != 'home' %}
     <nav class="navbar">
         <div class="nav-brand">
             <a href="{{ url_for('home') }}">⋆.˚ Typo Blog ⋆.˚</a>
         </div>
         <div class="nav-links">
-            <a href="{{ url_for('home') }}">✧ Home</a>
+            <a href="{{ url_for('feed') }}">✧ Feed</a>
             <a href="{{ url_for('create_post_page') }}">♡ New Post</a>
+            <a href="{{ url_for('customize') }}">⋆ Customize</a>
         </div>
     </nav>
+    {% if customization and customization.header_image %}
+    <div class="header-image">
+        <img src="{{ url_for('static', filename=customization.header_image) }}" alt="Header">
+    </div>
+    {% endif %}
+    {% endif %}
 
     <main class="container">
         {% block content %}

@@ -16,6 +16,24 @@ POSTS_FILE = os.path.join(os.path.dirname(__file__), 'posts.json')
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+class BlogCustomization:
+    def __init__(self):
+        self.header_image = None
+        self.bg_style = 'gradient1'
+    
+    def to_dict(self):
+        return {
+            'header_image': self.header_image,
+            'bg_style': self.bg_style
+        }
+    
+    @classmethod
+    def from_dict(cls, data):
+        customization = cls()
+        customization.header_image = data.get('header_image')
+        customization.bg_style = data.get('bg_style', 'gradient1')
+        return customization
+
 class BlogPost:
     def __init__(self, title, content, id=None, created_at=None, image_path=None):
         self.id = id if id else str(datetime.now().timestamp())
@@ -60,9 +78,60 @@ def save_posts(posts):
 # Initialize posts from file
 posts = load_posts()
 
+CUSTOMIZATION_FILE = os.path.join(os.path.dirname(__file__), 'customization.json')
+
+def load_customization():
+    if os.path.exists(CUSTOMIZATION_FILE):
+        try:
+            with open(CUSTOMIZATION_FILE, 'r') as f:
+                return BlogCustomization.from_dict(json.load(f))
+        except json.JSONDecodeError:
+            return BlogCustomization()
+    return BlogCustomization()
+
+def save_customization(customization):
+    with open(CUSTOMIZATION_FILE, 'w') as f:
+        json.dump(customization.to_dict(), f, indent=2)
+
+customization = load_customization()
+
 @app.route('/')
 def home():
-    return render_template('index.html', posts=posts)
+    return render_template('landing.html')
+
+@app.route('/feed')
+def feed():
+    return render_template('index.html', posts=posts, customization=customization)
+
+@app.route('/customize', methods=['GET'])
+def customize():
+    return render_template('customize.html', customization=customization)
+
+@app.route('/customize', methods=['POST'])
+def save_customization_route():
+    if 'header_image' in request.files:
+        file = request.files['header_image']
+        if file and file.filename:  # Check if a file was actually selected
+            if allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+                filename = f"header-{timestamp}-{filename}"
+                if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                    os.makedirs(app.config['UPLOAD_FOLDER'])
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                # Remove old header image if it exists
+                if customization.header_image:
+                    old_path = os.path.join(app.static_folder, customization.header_image)
+                    if os.path.exists(old_path):
+                        os.remove(old_path)
+                customization.header_image = f"uploads/{filename}"
+    
+    bg_style = request.form.get('bg_style')
+    if bg_style:
+        customization.bg_style = bg_style
+    
+    save_customization(customization)
+    return redirect(url_for('customize'))
 
 @app.route('/api/posts', methods=['GET'])
 def get_posts():

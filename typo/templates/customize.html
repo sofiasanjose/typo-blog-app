@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}✧ Customize Your Blog{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="page-title">Customize Your Blog ⋆.˚</h1>
+    
+    <div class="customize-section">
+        <h2>✧ Header Image</h2>
+        <form action="{{ url_for('save_customization') }}" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="header_image">Choose a header image</label>
+                <input type="file" id="header_image" name="header_image" class="file-input" accept="image/*">
+            </div>
+            
+            <h2>✧ Background Style</h2>
+            <div class="form-group">
+                <label for="bg_style">Choose background style</label>
+                <select id="bg_style" name="bg_style" class="form-select">
+                    <option value="gradient1">Soft Blue-Pink Gradient</option>
+                    <option value="gradient2">Pastel Rainbow</option>
+                    <option value="gradient3">Ocean Breeze</option>
+                    <option value="solid">Solid Color</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+    </div>
+
+    <div class="preview-section">
+        <h2>✧ Preview</h2>
+        {% if header_image %}
+            <img src="{{ url_for('static', filename=header_image) }}" alt="Header Preview" class="preview-image">
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
