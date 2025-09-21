@@ -1,14 +1,30 @@
 [
   {
+    "id": "1758476034.425837",
+    "title": "tewst",
+    "content": "tgjb",
+    "created_at": "2025-09-21T19:33:54.425848",
+    "image_path": "uploads/20250921-193354-Decorative_Image.jpeg"
+  },
+  {
     "id": "1758471460.739779",
     "title": "Test Title",
     "content": "Test Content",
-    "created_at": "2025-09-21T18:17:40.739815"
+    "created_at": "2025-09-21T18:17:40.739815",
+    "image_path": null
   },
   {
     "id": "1758471878.274636",
     "title": "My First Post",
     "content": "This is my first blog post!",
-    "created_at": "2025-09-21T18:24:38.274645"
+    "created_at": "2025-09-21T18:24:38.274645",
+    "image_path": null
+  },
+  {
+    "id": "1758475173.99259",
+    "title": "Hey there blog!!",
+    "content": "this is my first ever blog post, lets see how this goessss! <3",
+    "created_at": "2025-09-21T19:19:33.992605",
+    "image_path": null
   }
 ]

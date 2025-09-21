@@ -41,7 +41,7 @@ class BlogPost:
         self.content = content
         self.created_at = created_at if created_at else datetime.now().isoformat()
         self.image_path = image_path
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -50,14 +50,15 @@ class BlogPost:
             'created_at': self.created_at,
             'image_path': self.image_path
         }
-    
+
     @classmethod
     def from_dict(cls, data):
         return cls(
             title=data['title'],
             content=data['content'],
             id=data['id'],
-            created_at=data['created_at']
+            created_at=data['created_at'],
+            image_path=data.get('image_path')
         )
 
 # JSON file operations
@@ -147,7 +148,7 @@ def get_post(post_id):
     return jsonify(post.to_dict())
 
 @app.route('/api/posts', methods=['POST'])
-def create_post():
+def create_post_api():
     # Get the post data from the request
     data = request.get_json()
     
@@ -156,39 +157,27 @@ def create_post():
         return jsonify({'error': 'Title and content are required'}), 400
     
     # Create new blog post
-    new_post = BlogPost(data['title'], data['content'])
+    new_post = BlogPost(title=data['title'], content=data['content'])
     posts.append(new_post)
-    
-    # Save to JSON file
     save_posts(posts)
-    
-    # Return the created post
     return jsonify(new_post.to_dict()), 201
 
 @app.route('/api/posts/<post_id>', methods=['PUT'])
 def update_post(post_id):
+    # Get the post data from the request
+    data = request.get_json()
+    
     # Find the post with the given ID
     post = next((post for post in posts if post.id == post_id), None)
     if post is None:
         return jsonify({'error': 'Post not found'}), 404
     
-    # Get the post data from the request
-    data = request.get_json()
+    # Update post data
+    post.title = data.get('title', post.title)
+    post.content = data.get('content', post.content)
     
-    # Validate required fields
-    if not data or ('title' not in data and 'content' not in data):
-        return jsonify({'error': 'Title or content is required'}), 400
-    
-    # Update the post
-    if 'title' in data:
-        post.title = data['title']
-    if 'content' in data:
-        post.content = data['content']
-    
-    # Save to JSON file
+    # Save changes
     save_posts(posts)
-    
-    # Return the updated post
     return jsonify(post.to_dict())
 
 @app.route('/api/posts/<post_id>', methods=['DELETE'])
@@ -221,7 +210,7 @@ def delete_post(post_id):
     save_posts(posts)
     
     # Redirect back to home page
-    return redirect(url_for('home'))
+    return redirect(url_for('feed'))
 
 # Frontend routes
 @app.route('/posts/new', methods=['GET'])
@@ -229,28 +218,26 @@ def create_post_page():
     return render_template('create.html')
 
 @app.route('/posts/create', methods=['POST'])
-def create_post_submit():
+def create_post():
     title = request.form.get('title')
     content = request.form.get('content')
+    image = None
     
-    if not title or not content:
-        return "Title and content are required!", 400
-    
-    image_path = None
     if 'image' in request.files:
         file = request.files['image']
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
             filename = f"{timestamp}-{filename}"
+            if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                os.makedirs(app.config['UPLOAD_FOLDER'])
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            image_path = f"uploads/{filename}"
+            image = f"uploads/{filename}"
     
-    new_post = BlogPost(title, content, image_path=image_path)
-    posts.append(new_post)
+    new_post = BlogPost(title=title, content=content, image_path=image)
+    posts.insert(0, new_post)  # Add new posts at the beginning
     save_posts(posts)
-    
-    return redirect(url_for('home'))
+    return redirect(url_for('feed'))
 
 @app.route('/posts/<post_id>/edit', methods=['GET'])
 def edit_post_page(post_id):
@@ -265,18 +252,32 @@ def update_post_submit(post_id):
     if post is None:
         return "Post not found!", 404
     
-    title = request.form.get('title')
-    content = request.form.get('content')
+    post.title = request.form.get('title', post.title)
+    post.content = request.form.get('content', post.content)
     
-    if not title or not content:
-        return "Title and content are required!", 400
+    if 'image' in request.files:
+        file = request.files['image']
+        if file and file.filename:
+            if allowed_file(file.filename):
+                # Remove old image if it exists
+                if post.image_path:
+                    old_path = os.path.join(app.static_folder, post.image_path)
+                    if os.path.exists(old_path):
+                        os.remove(old_path)
+                
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+                filename = f"{timestamp}-{filename}"
+                if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                    os.makedirs(app.config['UPLOAD_FOLDER'])
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                post.image_path = f"uploads/{filename}"
     
-    post.title = title
-    post.content = content
     save_posts(posts)
-    
-    return redirect(url_for('home'))
+    return redirect(url_for('feed'))
 
 if __name__ == '__main__':
     print("Starting Flask app on http://localhost:8000 ...")
-    app.run(host='localhost', port=8000, debug=True)  # Try a different port
+    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+        os.makedirs(app.config['UPLOAD_FOLDER'])
+    app.run(debug=True, port=8000)
