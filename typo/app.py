@@ -1,27 +1,36 @@
-from flask import Flask, jsonify, request, render_template, redirect, url_for
+from flask import Flask, jsonify, request, render_template, redirect, url_for, send_from_directory
 from datetime import datetime
+from werkzeug.utils import secure_filename
 import json
 import os
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static/uploads')
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 # File path for JSON storage
 POSTS_FILE = os.path.join(os.path.dirname(__file__), 'posts.json')
 
 # Data model for a blog post
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 class BlogPost:
-    def __init__(self, title, content, id=None, created_at=None):
+    def __init__(self, title, content, id=None, created_at=None, image_path=None):
         self.id = id if id else str(datetime.now().timestamp())
         self.title = title
         self.content = content
         self.created_at = created_at if created_at else datetime.now().isoformat()
+        self.image_path = image_path
     
     def to_dict(self):
         return {
             'id': self.id,
             'title': self.title,
             'content': self.content,
-            'created_at': self.created_at
+            'created_at': self.created_at,
+            'image_path': self.image_path
         }
     
     @classmethod
@@ -114,7 +123,7 @@ def update_post(post_id):
     return jsonify(post.to_dict())
 
 @app.route('/api/posts/<post_id>', methods=['DELETE'])
-def delete_post(post_id):
+def delete_post_api(post_id):
     # Find the post with the given ID
     post = next((post for post in posts if post.id == post_id), None)
     if post is None:
@@ -129,6 +138,22 @@ def delete_post(post_id):
     # Return success message
     return jsonify({'message': 'Post deleted successfully'}), 200
 
+@app.route('/posts/<post_id>/delete', methods=['POST'])
+def delete_post(post_id):
+    # Find the post with the given ID
+    post = next((post for post in posts if post.id == post_id), None)
+    if post is None:
+        return "Post not found!", 404
+    
+    # Remove the post from the list
+    posts.remove(post)
+    
+    # Save to JSON file
+    save_posts(posts)
+    
+    # Redirect back to home page
+    return redirect(url_for('home'))
+
 # Frontend routes
 @app.route('/posts/new', methods=['GET'])
 def create_post_page():
@@ -142,7 +167,17 @@ def create_post_submit():
     if not title or not content:
         return "Title and content are required!", 400
     
-    new_post = BlogPost(title, content)
+    image_path = None
+    if 'image' in request.files:
+        file = request.files['image']
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+            filename = f"{timestamp}-{filename}"
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            image_path = f"uploads/{filename}"
+    
+    new_post = BlogPost(title, content, image_path=image_path)
     posts.append(new_post)
     save_posts(posts)
     
