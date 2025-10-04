@@ -2,13 +2,6 @@
 
 Typo is a minimalist blog application for short notes, ideas, and everyday writing. Built with Flask and using JSON for data persistence, it provides an intuitive interface for creating and managing blog posts with image support.
 
-## Documentation
-
-- [SDLC Documentation](docs/SDLC.md)
-- [Architecture Overview](docs/architecture.md)
-- [Requirements Documentation](docs/requirements.md)
-- [Planning Documentation](docs/planning.md)
-
 ## Features
 
 - Create, read, update, and delete blog posts
