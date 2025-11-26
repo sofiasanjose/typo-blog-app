@@ -15,11 +15,15 @@ Author: Sofia Claudia San Jose Bonoan
 Date: October 2025
 """
 
-from flask import Flask, jsonify, request, render_template, redirect, url_for, send_from_directory
+from flask import Flask, jsonify, request, render_template, redirect, url_for, g
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import json
 import os
+import time
+
+# Prometheus client for metrics
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 # Flask application configuration
 app = Flask(__name__)
@@ -31,6 +35,14 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 # File paths for JSON data storage
 POSTS_FILE = os.path.join(os.path.dirname(__file__), 'posts.json')
+
+# Application start time for health reporting
+APP_START_TIME = time.time()
+
+# Prometheus metrics
+REQUEST_COUNT = Counter('typo_request_count', 'Total Request Count', ['method', 'endpoint', 'http_status'])
+REQUEST_LATENCY = Histogram('typo_request_latency_seconds', 'Request latency', ['endpoint'])
+ERROR_COUNT = Counter('typo_error_count', 'Total error count', ['endpoint'])
 
 # Data model for a blog post
 def allowed_file(filename):
@@ -218,6 +230,48 @@ customization = load_customization()
 @app.route('/')
 def home():
     return render_template('landing.html')
+
+
+@app.before_request
+def start_timer():
+    # start request timer for metrics
+    g._start_time = time.time()
+
+
+@app.after_request
+def record_metrics(response):
+    try:
+        latency = time.time() - getattr(g, '_start_time', time.time())
+        endpoint = request.path
+        REQUEST_LATENCY.labels(endpoint=endpoint).observe(latency)
+        REQUEST_COUNT.labels(method=request.method, endpoint=endpoint, http_status=response.status_code).inc()
+    except Exception:
+        # don't let metrics break responses
+        pass
+    return response
+
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # increment error metric and return generic error response
+    try:
+        ERROR_COUNT.labels(endpoint=request.path).inc()
+    except Exception:
+        pass
+    return jsonify({'error': 'Internal server error'}), 500
+
+
+@app.route('/health', methods=['GET'])
+def health():
+    uptime = time.time() - APP_START_TIME
+    return jsonify({'status': 'ok', 'uptime_seconds': int(uptime)})
+
+
+@app.route('/metrics')
+def metrics():
+    # Expose Prometheus metrics
+    resp = generate_latest()
+    return (resp, 200, {'Content-Type': CONTENT_TYPE_LATEST})
 
 @app.route('/feed')
 def feed():

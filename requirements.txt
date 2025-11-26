@@ -1,1 +1,8 @@
 flask
+
+prometheus-client
+pytest
+pytest-cov
+ruff
+coverage
+
