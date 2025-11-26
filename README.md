@@ -16,6 +16,32 @@ Typo is a minimalist blog application for short notes, ideas, and everyday writi
 - pip (Python package manager)
 - Virtual environment (recommended)
 
+## Docker (optional, recommended)
+
+If you prefer running the app in a container, a production-ready multi-stage Dockerfile is included. You can build and run the image locally:
+
+Build the image:
+
+```bash
+docker build -t typo-blog-app:local .
+```
+
+Run the container:
+
+```bash
+docker run --rm -p 8000:8000 typo-blog-app:local
+```
+
+Or use docker-compose for local development (mounts the repo and uploads folder):
+
+```bash
+docker compose up --build
+```
+
+The app will be available on http://localhost:8000
+
+Note: the container uses `gunicorn` to serve the Flask app. `gunicorn` is included in `requirements.txt`.
+
 ## Setup Instructions
 
 1. Clone the repository:
