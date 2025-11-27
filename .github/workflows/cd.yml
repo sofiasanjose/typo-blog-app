@@ -33,18 +33,18 @@ jobs:
             ${{ secrets.ACR_REGISTRY }}/typo-blog-app:${{ github.sha }}
             ${{ secrets.ACR_REGISTRY }}/typo-blog-app:latest
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
-          images: ${{ secrets.ACR_REGISTRY }}/typo-blog-app:${{ github.sha }}
-
       - name: Confirm deployment
         env:
           IMAGE: ${{ secrets.ACR_REGISTRY }}/typo-blog-app:${{ github.sha }}
         run: |
-          echo "Deployed $IMAGE to ${{ secrets.AZURE_WEBAPP_NAME }}"
-          echo "App URL: https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net"
+          echo "✅ Built and pushed Docker image to ACR"
+          echo "Image: $IMAGE"
+          echo "Latest tag: ${{ secrets.ACR_REGISTRY }}/typo-blog-app:latest"
+          echo ""
+          echo "⚠️  Manual step required:"
+          echo "Go to Azure Portal → sof-typo-webapp-2004 → Deployment Center"
+          echo "Set the container image to: ${{ secrets.ACR_REGISTRY }}/typo-blog-app:latest"
+          echo "Or the Web App will auto-pull if continuous deployment is enabled."
 
 # Secrets required (add in GitHub repo settings -> Secrets):
 # - AZURE_CREDENTIALS: JSON output from `az ad sp create-for-rbac --sdk-auth`
