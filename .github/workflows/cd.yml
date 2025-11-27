@@ -74,6 +74,8 @@ jobs:
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }}
 
       - name: Confirm deployment
+        env:
+          IMAGE: ${{ secrets.ACR_REGISTRY }}/typo-blog-app:${{ github.sha }}
         run: |
           echo "Deployed $IMAGE to ${{ secrets.AZURE_WEBAPP_NAME }}"
           echo "App URL: https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net"
