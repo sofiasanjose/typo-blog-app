@@ -1,0 +1,50 @@
+# Prometheus configuration for Typo Blog App
+# This config file tells Prometheus where to scrape metrics from
+
+global:
+  scrape_interval: 15s      # How often to scrape targets
+  evaluation_interval: 15s  # How often to evaluate rules
+  
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+  external_labels:
+    monitor: 'typo-blog-monitor'
+    environment: 'production'
+
+# Scrape configurations
+scrape_configs:
+  # Job to scrape the Typo Blog App metrics
+  - job_name: 'typo-blog-app'
+    
+    # How often to scrape this target (overrides global)
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    
+    # Metrics endpoint path
+    metrics_path: '/metrics'
+    
+    # Scheme: http or https
+    scheme: https
+    
+    # Target to scrape
+    static_configs:
+      - targets: ['sof-typo-webapp-2004.azurewebsites.net']
+        labels:
+          app: 'typo-blog'
+          instance: 'azure-webapp'
+          region: 'westeurope'
+
+  # Job to scrape the health endpoint
+  - job_name: 'typo-blog-health'
+    
+    scrape_interval: 30s
+    scrape_timeout: 5s
+    
+    metrics_path: '/health'
+    scheme: https
+    
+    static_configs:
+      - targets: ['sof-typo-webapp-2004.azurewebsites.net']
+        labels:
+          app: 'typo-blog'
+          check: 'health'
