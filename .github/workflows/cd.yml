@@ -40,15 +40,9 @@ jobs:
           echo "✅ Built and pushed Docker image to ACR"
           echo "Image: $IMAGE"
           echo "Latest tag: ${{ secrets.ACR_REGISTRY }}/typo-blog-app:latest"
-          echo ""
-          echo "⚠️  Manual step required:"
-          echo "Go to Azure Portal → sof-typo-webapp-2004 → Deployment Center"
-          echo "Set the container image to: ${{ secrets.ACR_REGISTRY }}/typo-blog-app:latest"
-          echo "Or the Web App will auto-pull if continuous deployment is enabled."
+          echo "Azure Web App will auto-deploy the new image via continuous deployment"
 
-# Secrets required (add in GitHub repo settings -> Secrets):
-# - AZURE_CREDENTIALS: JSON output from `az ad sp create-for-rbac --sdk-auth`
-# - ACR_REGISTRY: e.g. myregistry.azurecr.io
-# - ACR_USERNAME and ACR_PASSWORD (optional if not using AZURE_CREDENTIALS)
-# - AZURE_WEBAPP_NAME: name of the Web App for Containers
-# - AZURE_RESOURCE_GROUP: resource group containing the Web App
+# Required GitHub Secrets:
+# - ACR_REGISTRY: Azure Container Registry URL (e.g., softypo2004.azurecr.io)
+# - ACR_USERNAME: ACR admin username
+# - ACR_PASSWORD: ACR admin password
